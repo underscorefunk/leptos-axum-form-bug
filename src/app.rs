@@ -1,6 +1,13 @@
+use std::str::Utf8Error;
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
+
+
+cfg_if::cfg_if! { if #[cfg(feature = "ssr")] {
+	use leptos_axum::RequestParts;
+    }
+}
 
 #[component]
 pub fn App(cx: Scope) -> impl IntoView {
@@ -18,23 +25,21 @@ pub fn App(cx: Scope) -> impl IntoView {
 #[component]
 fn FormPage(cx: Scope) -> impl IntoView {
     view! { cx,
-        <Form action="/form-action-page" method="get">
-            <input type="text" id="secret" placeholder="Tell me a secret" />
+        <form action="/form-action-page" method="post">
+            <input type="text" name="secret" id="secret" placeholder="Tell me a secret" />
             <input type="submit" value="Send request" />
-        </Form>
+        </form>
     }
 }
 
+#[cfg(feature = "ssr")]
 #[component]
 fn FormActionPage(cx: Scope) -> impl IntoView {
-    let fallback = "No secret was provided".to_string();
-    let qm = use_query_map(cx);
-    let pm = qm.get();
-    let the_secret = pm.get("secret")
-        .unwrap_or(&fallback);
+    view!{cx, "Server side response. This should display as a result of submitting the form."}
+}
 
-    view! { cx,
-        <h1>"You submitted a form and we ended up here!"</h1>
-        <p>{the_secret}</p>
-    }
+#[cfg(not(feature = "ssr"))]
+#[component]
+fn FormActionPage(cx: Scope) -> impl IntoView {
+    view! {cx, "Client side response. We're not doing CSR here."}
 }
